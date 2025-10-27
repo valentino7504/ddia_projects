@@ -8,6 +8,8 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+var ErrNotFound = errors.New("short URL not found")
+
 func GetConnection(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
@@ -25,14 +27,14 @@ func InitDB(db *sql.DB) error {
 	}
 
 	const query = `CREATE TABLE IF NOT EXISTS short_urls (
-			id INTEGER PRIMARY KEY AUTOINCREMENT
-			short_code TEXT NOT NULL
-			original_url TEXT NOT NULL
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			short_code TEXT UNIQUE NOT NULL,
+			original_url TEXT NOT NULL,
 			created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
 		);`
 
 	if _, err := db.Exec(query); err != nil {
-		return fmt.Errorf("Could not initialize database - %w", err)
+		return fmt.Errorf("could not initialize database - %w", err)
 	}
 	return nil
 }
@@ -81,7 +83,7 @@ func GetShortURL(sqliteDB *sql.DB, shortCode string) (*ShortURL, error) {
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("unable to fetch shorturl - %w", err)
 	}
@@ -93,7 +95,7 @@ func InsertShortURL(sqliteDB *sql.DB, url string) (*ShortURL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize db transaction for createioN")
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	const query = `INSERT INTO short_urls
 		(short_code, original_url)
 		VALUES ("", ?) RETURNING id, created_at;`
@@ -121,7 +123,7 @@ func DeleteShortURL(sqliteDB *sql.DB, shortCode string) error {
 	var delID int64
 	if err := sqliteDB.QueryRow(query, shortCode).Scan(&delID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil
+			return ErrNotFound
 		}
 		return fmt.Errorf("Error deleting record with provided short code")
 	}
