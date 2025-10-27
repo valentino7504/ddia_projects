@@ -54,6 +54,24 @@ func (s *ShortenService) ResolveShortURL(code string) (string, error) {
 	return url.OriginalURL, nil
 }
 
+func (s *ShortenService) GetURLDetails(code string) (*db.ShortURL, error) {
+	url, err := db.GetShortURL(s.sqliteDB, code)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching url details - %w", err)
+	}
+	if url == nil {
+		s.Logger.Error("unable to get URL details", "error", "short code does not exist")
+		return nil, db.ErrNotFound
+	}
+	s.Logger.Info("url details fetched",
+		"id", url.ID,
+		"shortcode", url.ShortCode,
+		"original_url", url.OriginalURL,
+		"created_at", url.CreatedAt,
+	)
+	return url, nil
+}
+
 func (s *ShortenService) DeleteShortURL(code string) error {
 	err := db.DeleteShortURL(s.sqliteDB, code)
 	if err != nil {
