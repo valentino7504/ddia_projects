@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"valentino7504/1-url-shortener/internal/base62"
+
 	_ "modernc.org/sqlite"
 )
 
@@ -81,6 +83,7 @@ func GetShortURL(sqliteDB *sql.DB, shortCode string) (*ShortURL, error) {
 		&shortURL.OriginalURL,
 		&createdAt,
 	)
+	shortURL.CreatedAt = ParseDateTime(createdAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
@@ -105,7 +108,7 @@ func InsertShortURL(sqliteDB *sql.DB, url string) (*ShortURL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error in adding url - %w", err)
 	}
-	shortCode := EncodeBase62(urlID)
+	shortCode := base62.EncodeBase62(urlID)
 	_, err = tx.Exec("UPDATE short_urls SET short_code = ? WHERE id = ?", shortCode, urlID)
 	if err != nil {
 		return nil, fmt.Errorf("error in adding url - %w", err)
