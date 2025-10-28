@@ -19,6 +19,7 @@ func main() {
 	logger.Info("Starting a new server", slog.Any("port", 4000))
 
 	sqliteDB, err := db.GetConnection(path)
+	defer func() { _ = sqliteDB.Close() }()
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
