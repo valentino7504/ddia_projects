@@ -2,8 +2,10 @@ package service
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 
 	"valentino7504/1-url-shortener/internal/db"
@@ -13,6 +15,8 @@ type ShortenService struct {
 	sqliteDB *sql.DB
 	Logger   *slog.Logger
 }
+
+var MalformattedURLErr error = errors.New("invalid url provided")
 
 func NewShortenService(sqliteDB *sql.DB, logger *slog.Logger) *ShortenService {
 	svc := ShortenService{sqliteDB: sqliteDB, Logger: logger}
@@ -25,6 +29,19 @@ func NewShortenService(sqliteDB *sql.DB, logger *slog.Logger) *ShortenService {
 }
 
 func (s *ShortenService) CreateShortURL(longURL string) (string, error) {
+	u, err := url.Parse(longURL)
+	if err != nil {
+		return "", MalformattedURLErr
+	}
+	if u.Scheme == "" {
+		longURL = "https://" + longURL
+		if err != nil {
+			return "", MalformattedURLErr
+		}
+	}
+	if u.Host == "" {
+		return "", MalformattedURLErr
+	}
 	url, err := db.InsertShortURL(s.sqliteDB, longURL)
 	if err != nil {
 		s.Logger.Error("unable to create new short URL", "error", err)
