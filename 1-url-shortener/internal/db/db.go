@@ -121,14 +121,9 @@ func InsertShortURL(sqliteDB *sql.DB, url string) (*ShortURL, error) {
 
 func DeleteShortURL(sqliteDB *sql.DB, shortCode string) error {
 	const query = `DELETE FROM short_urls
-		WHERE short_code = ?
-		RETURNING id;`
-	var delID int64
-	if err := sqliteDB.QueryRow(query, shortCode).Scan(&delID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return ErrNotFound
-		}
-		return fmt.Errorf("Error deleting record with provided short code")
+		WHERE short_code = ?;`
+	if _, err := sqliteDB.Exec(query, shortCode); err != nil {
+		return fmt.Errorf("error deleting record with provided short code")
 	}
 	return nil
 }
