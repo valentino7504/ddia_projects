@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"os"
+	"regexp"
+	"strings"
 
 	"valentino7504/1-url-shortener/internal/db"
 )
@@ -16,31 +17,38 @@ type ShortenService struct {
 	Logger   *slog.Logger
 }
 
-var MalformattedURLErr error = errors.New("invalid url provided")
+var ErrMalformattedURL error = errors.New("invalid url provided")
 
-func NewShortenService(sqliteDB *sql.DB, logger *slog.Logger) *ShortenService {
+var (
+	domainRe = regexp.MustCompile(`^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$`)
+	ipv4Re   = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$`)
+)
+
+func NewShortenService(sqliteDB *sql.DB, logger *slog.Logger) (*ShortenService, error) {
 	svc := ShortenService{sqliteDB: sqliteDB, Logger: logger}
 	err := db.InitDB(sqliteDB)
 	if err != nil {
-		svc.Logger.Error("unable to initialize db - quitting", "error", err)
-		os.Exit(1)
+		svc.Logger.Error("unable to initialize db", "error", err)
+		return nil, err
 	}
-	return &svc
+	return &svc, nil
 }
 
 func (s *ShortenService) CreateShortURL(longURL string) (string, error) {
+	longURL = strings.TrimSpace(longURL)
 	u, err := url.Parse(longURL)
 	if err != nil {
-		return "", MalformattedURLErr
+		return "", ErrMalformattedURL
 	}
 	if u.Scheme == "" {
 		longURL = "https://" + longURL
+		u, err = url.Parse(longURL)
 		if err != nil {
-			return "", MalformattedURLErr
+			return "", ErrMalformattedURL
 		}
 	}
-	if u.Host == "" {
-		return "", MalformattedURLErr
+	if !domainRe.MatchString(u.Host) && !ipv4Re.MatchString(u.Host) {
+		return "", ErrMalformattedURL
 	}
 	url, err := db.InsertShortURL(s.sqliteDB, longURL)
 	if err != nil {
@@ -58,11 +66,10 @@ func (s *ShortenService) CreateShortURL(longURL string) (string, error) {
 func (s *ShortenService) ResolveShortURL(code string) (string, error) {
 	url, err := db.GetShortURL(s.sqliteDB, code)
 	if err != nil {
+		if url == nil {
+			return "", db.ErrNotFound
+		}
 		return "", fmt.Errorf("error fetching url destination - %w", err)
-	}
-	if url == nil {
-		s.Logger.Error("unable to redirect user", "error", "short code does not exist")
-		return "", db.ErrNotFound
 	}
 	s.Logger.Info("redirected user",
 		"shortcode", url.ShortCode,
@@ -74,11 +81,10 @@ func (s *ShortenService) ResolveShortURL(code string) (string, error) {
 func (s *ShortenService) GetURLDetails(code string) (*db.ShortURL, error) {
 	url, err := db.GetShortURL(s.sqliteDB, code)
 	if err != nil {
+		if url == nil {
+			return nil, db.ErrNotFound
+		}
 		return nil, fmt.Errorf("error fetching url details - %w", err)
-	}
-	if url == nil {
-		s.Logger.Error("unable to get URL details", "error", "short code does not exist")
-		return nil, db.ErrNotFound
 	}
 	s.Logger.Info("url details fetched",
 		"id", url.ID,
