@@ -4,7 +4,8 @@
 
 This project is part of my practical study of _Designing Data-Intensive Applications (DDIA)_ — **Chapter 1: Reliable, Scalable, and Maintainable Applications**.
 
-The goal was not to build a production system but to _observe system behavior_ under different loads and failure modes — to **feel** what reliability, scalability, and maintainability look like in code.
+The goal was not really to build a production system but to observe how systems behave under different loads.
+It has also helped me understand more what reliability, scalability, and maintainability look like through load testing with _hey_
 
 ---
 
@@ -50,11 +51,11 @@ hey -n 1000 -c 50 -m POST -H "Content-Type: application/json" \
 
 #### Summary
 
-> Total: 7.6477 seconds
-> Slowest: 1.3431 seconds
-> Fastest: 0.2060 seconds
-> Average: 0.3609 seconds
-> Requests/sec: 130.7575
+Total: 7.6477 seconds
+Slowest: 1.3431 seconds
+Fastest: 0.2060 seconds
+Average: 0.3609 seconds
+Requests/sec: 130.7575
 
 #### Latency Distribution
 
@@ -76,11 +77,11 @@ hey -n 1000 -c 50 -m POST -H "Content-Type: application/json" \
 
 #### Summary
 
-> Total: 0.0808 secs
-> Slowest: 0.0180 secs
-> Fastest: 0.0001 secs
-> Average: 0.0033 secs
-> Requests/sec: 12376.84
+Total: 0.0808 secs  
+Slowest: 0.0180 secs  
+Fastest: 0.0001 secs  
+Average: 0.0033 secs  
+Requests/sec: 12376.84
 
 #### Latency Distribution
 
@@ -97,3 +98,67 @@ hey -n 1000 -c 50 -m POST -H "Content-Type: application/json" \
 - High stability — 99% of requests complete in < 16ms.
 - Throughput > 12k req/s — excellent local read scalability.
 - Confirms that SQLite read operations scale well on a single node.
+
+### Shorten Route - POST /api/shorten
+
+#### Initial Concurrent Test (-c 50)
+
+- A lot of failed writes because the database locked
+- SQLite does not allow concurrent writes -> trades scalability for reliability
+- Also created .db-journal file, which I obviously did not push lol
+  **The results below are for the serialized test ie (-c 1)**
+
+#### Summary
+
+Total: 0.3196 secs  
+Slowest: 0.0152 secs  
+Fastest: 0.0026 secs  
+Average: 0.0032 secs  
+Requests/sec: 312.91
+
+#### Latency Distribution
+
+| Percentile | Time(s) |
+| ---------- | ------- |
+| p50        | 0.0029  |
+| p90        | 0.0033  |
+| p95        | 0.0040  |
+| p99        | 0.0152  |
+
+#### Interpretation
+
+- Sustained 300+ req/s with only 1 writer.
+- 3 ms average latency; 100% success rate (\[201]).
+- SQLite is very reliable when writes are serialized
+- SQLite trade off - strong consistency vs limited concurrency
+
+## Concept Mapping
+
+| Concept             | Things Learnt From This Project                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Reliability         | No corrupt writes, consistent 200/201 responses under necessary concurrency limits                               |
+| Scalability         | 12k reads per second, write path restricted by sqlite to single-writer throughput (around 300 writes per second) |
+| Maintainability     | Simple Go service + sqlite db, nothing complex, plus logs                                                        |
+| Load & load testing | Simulated using [`hey`](https://github.com/rakyll/hey) for concurrent HTTP traffic                               |
+| Throughput          | Measured total requests per second, with distinct profiles for read vs write load                                |
+| Latency             | Median (p50) and other percentile metrics show response time distribution under load                             |
+| Availability        | 0% error in stable configurations. Probably not possible in professional setting.                                |
+| Fault Tolerance     | SQLite journaling prevents corruption due to colliding writes                                                    |
+| Monitoring          | Observed via request metrics and logs but there is room for more - eg health endpoints                           |
+
+## Key Takeaways
+
+1. Reliability: The system stayed consistent and error free under expected load
+2. Scalability: Reads scale easily; concurrent writes bottleneck instantly due to SQLite’s single-writer design
+3. Maintainability: Minimal moving parts make debugging and iteration simple.
+
+Overall the project shows:
+
+- reliability through safe persistence,
+- scalability through concurrency limits,
+- maintainability through simplicity.
+
+## Conclusion
+
+A single-node, file-based system can be highly reliable and maintainable, but it will inevitably hit scalability limits under concurrent writes.
+However, I wasn't trying to avoid it, just observe it.
