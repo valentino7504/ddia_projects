@@ -134,17 +134,17 @@ Requests/sec: 312.91
 
 ## Concept Mapping
 
-| Concept             | Things Learnt From This Project                                                                                  |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Reliability         | No corrupt writes, consistent 200/201 responses under necessary concurrency limits                               |
-| Scalability         | 12k reads per second, write path restricted by sqlite to single-writer throughput (around 300 writes per second) |
-| Maintainability     | Simple Go service + sqlite db, nothing complex, plus logs                                                        |
-| Load & load testing | Simulated using [`hey`](https://github.com/rakyll/hey) for concurrent HTTP traffic                               |
-| Throughput          | Measured total requests per second, with distinct profiles for read vs write load                                |
-| Latency             | Median (p50) and other percentile metrics show response time distribution under load                             |
-| Availability        | 0% error in stable configurations. Probably not possible in professional setting.                                |
-| Fault Tolerance     | SQLite journaling prevents corruption due to colliding writes                                                    |
-| Monitoring          | Observed via request metrics and logs but there is room for more - eg health endpoints                           |
+| Concept             | Things Learnt From This Project                                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Reliability         | No corrupt writes, consistent 200/201 responses under necessary concurrency limits                                       |
+| Scalability         | 12k reads per second, write path restricted by sqlite to single-writer throughput (around 300 writes per second)         |
+| Maintainability     | Simple Go service + sqlite db, nothing complex, plus logs                                                                |
+| Load & load testing | Simulated using [`hey`](https://github.com/rakyll/hey) for concurrent HTTP traffic                                       |
+| Throughput          | Measured total requests per second, with distinct profiles for read vs write load                                        |
+| Latency             | Median (p50) and other percentile metrics show response time distribution under load                                     |
+| Availability        | 0% error in stable configurations. Probably not possible in professional setting.                                        |
+| Fault Tolerance     | SQLite journaling prevents corruption due to colliding writes. I just discovered SetMaxOpenConns(1) and have now updated |
+| Monitoring          | Observed via request metrics and logs but there is room for more - eg health endpoints                                   |
 
 ## Key Takeaways
 
