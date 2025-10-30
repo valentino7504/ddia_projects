@@ -51,10 +51,10 @@ hey -n 1000 -c 50 -m POST -H "Content-Type: application/json" \
 
 #### Summary
 
-Total: 7.6477 seconds
-Slowest: 1.3431 seconds
-Fastest: 0.2060 seconds
-Average: 0.3609 seconds
+Total: 7.6477 seconds  
+Slowest: 1.3431 seconds  
+Fastest: 0.2060 seconds  
+Average: 0.3609 seconds  
 Requests/sec: 130.7575
 
 #### Latency Distribution
