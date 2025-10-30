@@ -25,7 +25,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	svc := service.NewShortenService(sqliteDB, logger)
+	svc, err := service.NewShortenService(sqliteDB, logger)
+	if err != nil {
+		os.Exit(1)
+	}
+
 	err = http.ListenAndServe(":4000", api.Routes(svc))
 	if err != nil {
 		logger.Error("App unable to start")
