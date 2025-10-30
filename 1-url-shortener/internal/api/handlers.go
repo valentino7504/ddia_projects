@@ -90,7 +90,7 @@ func createShortURL(s *service.ShortenService) http.HandlerFunc {
 		}
 		code, err := s.CreateShortURL(req.URL)
 		if err != nil {
-			if errors.Is(err, service.MalformattedURLErr) {
+			if errors.Is(err, service.ErrMalformattedURL) {
 				sendJSONError(w, "invalid URL", http.StatusBadRequest)
 			} else {
 				s.Logger.Error("unable to create shortcode", "error", err)
