@@ -17,6 +17,7 @@ func GetConnection(path string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot open db: %w", err)
 	}
+	db.SetMaxOpenConns(1)
 	return db, nil
 }
 
