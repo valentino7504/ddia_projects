@@ -30,7 +30,7 @@ func redirect(s *service.ShortenService) http.HandlerFunc {
 			}
 			return
 		}
-		http.Redirect(w, r, url, http.StatusFound)
+		http.Redirect(w, r, url, http.StatusMovedPermanently)
 	}
 }
 
