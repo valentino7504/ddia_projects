@@ -1,0 +1,14 @@
+[project]
+name = "2-multi-model-blog-system"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "faker>=40.28.1",
+    "neo4j>=6.2.0",
+    "psycopg[binary]>=3.3.4",
+    "pymongo>=4.17.0",
+    "python-dotenv>=1.2.2",
+    "rich>=15.0.0",
+]
