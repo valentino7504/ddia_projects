@@ -1,0 +1,56 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "username": "alice",
+      "email": "alice@example.com"
+    },
+    {
+      "id": "u2",
+      "username": "bob",
+      "email": "bob@example.com"
+    },
+    {
+      "id": "u3",
+      "username": "charlie",
+      "email": "charlie@example.com"
+    }
+  ],
+  "posts": [
+    {
+      "id": "p1",
+      "title": "Tech Trends 2026",
+      "body": "A look at where software engineering is heading this year.",
+      "user_id": "u1"
+    },
+    {
+      "id": "p2",
+      "title": "My Journey in DDIA",
+      "body": "Notes from working through Designing Data-Intensive Applications.",
+      "user_id": "u2"
+    }
+  ],
+  "comments": [
+    {
+      "id": "c1",
+      "post_id": "p1",
+      "user_id": "u2",
+      "body": "Great breakdown, Alice!",
+      "parent_comment_id": null
+    },
+    {
+      "id": "c2",
+      "post_id": "p1",
+      "user_id": "u3",
+      "body": "Agreed, especially the point on data locality.",
+      "parent_comment_id": "c1"
+    },
+    {
+      "id": "c3",
+      "post_id": "p2",
+      "user_id": "u1",
+      "body": "This mirrors my own DDIA notes almost exactly.",
+      "parent_comment_id": null
+    }
+  ]
+}
