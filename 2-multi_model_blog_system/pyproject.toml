@@ -12,3 +12,14 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "rich>=15.0.0",
 ]
+
+[tool.ty.rules]
+missing-type-argument = "error"
+possibly-unresolved-reference = "warn"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["ANN", "PYI"]
+preview = true
